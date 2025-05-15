@@ -1,0 +1,187 @@
+---
+title: "Practice lab 4 assignment"
+author: "Andria Grace"
+date: "2023-10-10"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+#empty environment
+rm(list=ls())
+
+#Loading libraries
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(table1)
+library(doBy)
+library(writexl)
+
+
+#folder definitions
+read.directory<-"C:/Users/Andria Grace/Desktop/Semester1/Computaional stats and probabaility Module/"
+#read.directory<-"C:/Users/3108313/OneDrive - Fresenius Medical Care/Desktop/JGR/Academics/Yeshiva/Fall 2023/Graduates/Module 3/"
+write.directory<-"C:/Users/Andria Grace/Desktop/Semester1/Computaional stats and probabaility Module/cdc.xlsx"
+file.name<-"Module 4 - df.xlsx"
+```
+
+#1)	What’s the probability of
+#a.	rolling a 6 on a die
+```{r}
+p<-1/6
+p
+```
+#b.	rolling three consecutive times a 6
+```{r}
+p<-1/6*1/6*1/6
+p
+```
+#c.	rolling a 6, a 1 and a 6 again
+```{r}
+p<-1/6*1/6*1/6
+p
+```
+#2)	Define categories of random variables and give at least 2 examples for each group. 
+#a.	Continuous
+```{r}
+## When a random variable takes continuous variable(Takes infinite values) is called continuous random variables.
+##example: Time, Temperature
+```
+
+#b.	Categorical
+```{r}
+##It contains a finite number of categories or a group. eg: Gender, Blood Type
+```
+
+#c.	Discrete
+```{r}
+##  When a random variable takes specific or distinct variables within the interval is called discrete random variable.
+##example:Number of Cars, rolling a die
+```
+
+#3)	Normal distribution
+#a.	Load the CDC dataset
+#Read data
+```{r}
+source("http://www.openintro.org/stat/data/cdc.R")
+View(cdc)
+#Functions
+SD_pop<-function(x,n){sqrt(sum( (x - mean(x) )^2)/(n))}
+```
+#b.	Calculate all index points for the empirical rule
+```{r}
+#calculate BMI
+cdc$weight_kg<-cdc$weight/2.2
+cdc$height_cm<-cdc$height * 2.5
+cdc$height_m <-cdc$height_cm / 100
+cdc$BMI <- cdc$weight_kg / cdc$height_m^2
+df<-cdc
+mean(df$BMI)
+SD_pop((df$BMI),length(df$BMI))
+c(round(mean(df$BMI)-1*SD_pop(df$BMI,length(df$BMI)),2), "to", mean(df$BMI)+1*SD_pop(df$BMI,length(df$BMI))) #68%
+c(mean(df$BMI)-2*SD_pop(df$BMI,length(df$BMI)), "to", mean(df$BMI)+2*SD_pop(df$BMI,length(df$BMI))) #95%
+c(mean(df$BMI)-3*SD_pop(df$BMI,length(df$BMI)), "to", mean(df$BMI)+3*SD_pop(df$BMI,length(df$BMI))) #99.7%
+```
+#c.	Plot the normal distribution for BMI as a histogram in R
+```{r}
+hist(df$BMI)
+```
+#d.	Indicate +/-1, 2 and 3 standard deviations in the histogram
+```{r}
+hist(df$BMI)
+abline(v=mean(df$BMI)-1*SD_pop(df$BMI,length(df$BMI)),col="red",lty=2)
+abline(v=mean(df$BMI)-2*SD_pop(df$BMI,length(df$BMI)),col="green",lty=4)
+abline(v=mean(df$BMI)-3*SD_pop(df$BMI,length(df$BMI)),col="blue",lty=4)
+abline(v=mean(df$BMI)+1*SD_pop(df$BMI,length(df$BMI)),col="red",lty=2)
+abline(v=mean(df$BMI)+2*SD_pop(df$BMI,length(df$BMI)),col="green",lty=4)
+abline(v=mean(df$BMI)+3*SD_pop(df$BMI,length(df$BMI)),col="blue",lty=4)
+```
+#e.	Calculate the above stated values, the z-scores and the probabilities
+```{r}
+z_scores=(df$BMI-mean(df$BMI))/SD_pop((df$BMI),length(df$BMI))
+quantile(z_scores,probs = c(68,95,99.7)/100)
+```
+
+
+#probabilities
+```{r}
+pnorm(mean(df$BMI)+1*SD_pop(df$BMI,length(df$BMI)),mean=mean(df$BMI),sd=SD_pop(df$BMI,length(df$BMI)), lower.tail = TRUE)-pnorm(mean(df$BMI)-1*SD_pop(df$BMI,length(df$BMI)),mean=mean(df$BMI),sd=SD_pop(df$BMI,length(df$BMI)), lower.tail = TRUE)
+pnorm(mean(df$BMI)+2*SD_pop(df$BMI,length(df$BMI)),mean=mean(df$BMI),sd=SD_pop(df$BMI,length(df$BMI)), lower.tail = TRUE)-pnorm(mean(df$BMI)-2*SD_pop(df$BMI,length(df$BMI)),mean=mean(df$BMI),sd=SD_pop(df$BMI,length(df$BMI)), lower.tail = TRUE)
+pnorm(mean(df$BMI)+3*SD_pop(df$BMI,length(df$BMI)),mean=mean(df$BMI),sd=SD_pop(df$BMI,length(df$BMI)), lower.tail = TRUE)-pnorm(mean(df$BMI)-3*SD_pop(df$BMI,length(df$BMI)),mean=mean(df$BMI),sd=SD_pop(df$BMI,length(df$BMI)), lower.tail = TRUE)
+```
+#f.	Create a standard normal distribution and plot the z-scores as a histogram
+```{r}
+#generate a simulated normal distribution curve  
+mean<-mean(df$BMI);sd=SD_pop(df$BMI,length(df$BMI))
+x <- seq(-10, 10, by=0.1)
+plot(df$BMI,dnorm(df$BMI, mean = mean, sd = sd, log = FALSE))
+```
+
+```{r}
+hist(z_scores)
+```
+
+
+
+#Calculate probability for the following examples
+#i.	4 individuals enter a clinic, what’s the p that exactly 3 are diabetic (prevalence 10%)
+```{r}
+dbinom(3,size=4,0.1)
+```
+
+#ii.	12 individuals enter a hair salon, what’s the p that exactly 4 have alopecia (prevalence 20% in the studied population)
+```{r}
+dbinom(4,size=12,0.2)
+```
+
+#iii.	15 individuals enter a dentist office, what’s the p that exactly 3 have dental cavity (prevalence 30% in the studied population)
+```{r}
+dbinom(3,size=15,0.3)
+```
+
+#iv.	15 individuals enter a dentist office, what’s the p that at least 3 have dental cavity (prevalence 30% in the studied population)
+```{r}
+1-(dbinom(0, size=15, prob=0.3)  
+     + dbinom(1, size=15, prob=0.3)  
+     + dbinom(2, size=15, prob=0.3)
+      + dbinom(3,size=15,prob=0.3))
+```
+
+#v.	A die is rolled once. What is the probability that the number rolled is even?
+```{r}
+dbinom(2,size=1,prob = 1/6) + dbinom(4,size=1,prob = 1/6) + dbinom(6,size=1,prob = 1/6)
+```
+
+#vi.	A random number is selected between 5 and 15, inclusive. What is the probability that the number selected is less than 10?
+```{r}
+dbinom(5,size=1,prob=1/11)+ dbinom(6,size=1,prob=1/11)+dbinom(7,size=1,prob=1/11)+dbinom(8,size=1,prob=1/11)+dbinom(9,size=1,prob=1/11)
+```
+
+#vii.	If a coin is flipped 5 times, what is the probability of getting exactly 3 heads?
+```{r}
+dbinom(3,size=5,prob=1/2)
+```
+
+#viii.	A test taker guesses answers on a 10-question true/false quiz. What's the probability that they guess exactly 7 correctly?
+```{r}
+dbinom(7,size=10,1/2)
+```
+
+#ix.	The lifetimes of a certain brand of light bulbs are normally distributed with a mean of 800 hours and a standard deviation of 50 hours. What is the probability that a randomly chosen bulb lasts between 750 and 850 hours?
+```{r}
+z<- (750 - 800) / 50
+pnorm(z)
+```
+
+#x.	Scores on a particular exam are normally distributed with a mean of 70 and a standard deviation of 10. What percentage of students scored less than 55?
+```{r}
+z<-(55-70)/10
+pnorm(z)
+```
+
+
+
+
+
